@@ -1,18 +1,15 @@
-// Databázová vrstva - libSQL (SQLite kompatibilní).
-// Lokálně běží jako soubor (data/training.db), na Vercelu se připojí
-// na vzdálenou Turso databázi přes TURSO_DATABASE_URL + TURSO_AUTH_TOKEN.
-import { createClient } from '@libsql/client';
-import { mkdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+// Databázová vrstva - Turso (libSQL) přes HTTP klienta.
+// "/web" varianta nemá nativní binárky, takže běží bez problémů
+// jak lokálně, tak v serverless prostředí (Vercel).
+import { createClient } from '@libsql/client/web';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const url = process.env.TURSO_DATABASE_URL;
+const authToken = process.env.TURSO_AUTH_TOKEN;
 
-const url = process.env.TURSO_DATABASE_URL || `file:${join(__dirname, 'data', 'training.db')}`;
-const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
-
-if (url.startsWith('file:')) {
-  mkdirSync(join(__dirname, 'data'), { recursive: true });
+if (!url || !authToken) {
+  throw new Error(
+    'Chybí TURSO_DATABASE_URL nebo TURSO_AUTH_TOKEN. Vlož je do souboru .env (viz .env.example).'
+  );
 }
 
 const db = createClient({ url, authToken });

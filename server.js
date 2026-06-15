@@ -33,11 +33,11 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 
-// Cíle závodu Half Iron-Man.
+// Tréninkové cíle (celkový nasbíraný objem km do závodu Half Iron-Man).
 const RACE_GOALS = {
-  swim: { distance_km: 1.9, label: 'Plavání' },
-  bike: { distance_km: 90, label: 'Kolo' },
-  run: { distance_km: 21.1, label: 'Běh' },
+  swim: { distance_km: 15, label: 'Plavání' },
+  bike: { distance_km: 1000, label: 'Kolo' },
+  run: { distance_km: 350, label: 'Běh' },
 };
 
 // --- Analýza screenshotu přes AI (zatím se NEUKLÁDÁ, jen vrátí data) ---

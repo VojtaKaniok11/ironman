@@ -18,17 +18,20 @@ npm install
 ```
 (Už je hotovo, pokud jsi tento krok dělal se mnou.)
 
-### 2. Vlož svůj OpenAI API klíč
+### 2. Vlož přístupové údaje
 - Zkopíruj soubor `.env.example` a přejmenuj kopii na `.env`
-- Otevři `.env` a vlož svůj klíč:
+- Otevři `.env` a vyplň:
 ```
 OPENAI_API_KEY=sk-tvuj-klic
+TURSO_DATABASE_URL=libsql://tvoje-db.turso.io
+TURSO_AUTH_TOKEN=tvuj-token
 ```
-Klíč získáš na <https://platform.openai.com/api-keys>.
+OpenAI klíč získáš na <https://platform.openai.com/api-keys>.
+Turso údaje získáš v dashboardu na <https://turso.tech> (vytvoř databázi → Create Token).
 
 > 💸 **Cena:** používá se nejlevnější „vision" model `gpt-4o-mini`.
 > Jeden screenshot stojí přibližně **$0.0002–0.0003**, takže s 4 USD přečteš
-> klidně **10 000+ screenshotů**. Rozpočet je v pohodě.
+> klidně **10 000+ screenshotů**. Turso je v free tieru zdarma pro osobní použití.
 
 ### 3. Spusť aplikaci
 ```
@@ -57,62 +60,34 @@ Pak otevři v prohlížeči: <http://localhost:3000>
 |---|---|
 | `server.js`        | Express server + API routy |
 | `ai.js`            | Čtení screenshotu přes OpenAI vision |
-| `db.js`            | Databáze (libSQL – lokální soubor nebo Turso) |
+| `db.js`            | Databáze (Turso / libSQL přes HTTP) |
 | `public/`          | Frontend (HTML / CSS / JS, retro styl) |
-| `data/training.db` | Tvoje data – lokální databáze (vznikne po prvním uložení) |
 | `api/index.js`     | Vstupní bod pro Vercel serverless funkci |
 | `vercel.json`      | Konfigurace nasazení na Vercel |
-| `.env`             | Tvůj OpenAI klíč + (volitelně) Turso přístupové údaje |
+| `.env`             | OpenAI klíč + Turso přístupové údaje (necommituje se) |
 
 ### Kde jsou moje data?
-Databáze je přes **libSQL** (SQLite kompatibilní).
-- **Lokálně** (`npm start`) se data ukládají do souboru `data/training.db` na tvém
-  počítači — nic se nikam neposílá kromě samotného screenshotu do OpenAI při čtení.
-- **Na Vercelu** (viz níže) se použije vzdálená **Turso** databáze, protože Vercel
-  neumí trvale ukládat soubory na disk.
+V cloudové **Turso** databázi (SQLite kompatibilní, libSQL) — stejná databáze
+se používá lokálně i na Vercelu, takže appka vidí stejná data odkudkoliv.
+Free tier je víc než dost pro osobní použití. Nic dalšího se nikam neposílá,
+kromě samotného screenshotu do OpenAI při čtení.
 
 ---
 
 ## 🚀 Nasazení na Vercel (přístup z mobilu odkudkoliv)
 
-Aby appka šla nasadit na Vercel, potřebuje databázi mimo lokální disk —
-k tomu slouží **Turso** (cloud SQLite, zdarma pro osobní použití).
-
-### 1. Vytvoř Turso databázi
-1. Zaregistruj se na <https://turso.tech> (zdarma).
-2. Nainstaluj Turso CLI a přihlas se (nebo použij web dashboard):
-   ```
-   curl -sSfL https://get.tur.so/install.sh | bash
-   turso auth login
-   ```
-3. Vytvoř databázi a zjisti přihlašovací údaje:
-   ```
-   turso db create ironman-tracker
-   turso db show ironman-tracker --url
-   turso db tokens create ironman-tracker
-   ```
-   První příkaz vypíše `TURSO_DATABASE_URL` (začíná `libsql://...`),
-   druhý vypíše `TURSO_AUTH_TOKEN`.
-
-### 2. Nasaď na Vercel
-1. Nainstaluj Vercel CLI: `npm install -g vercel`
-2. V této složce spusť: `vercel`
-   (přihlásíš se přes browser, projekt se vytvoří)
-3. V nastavení projektu na [vercel.com](https://vercel.com) → **Settings → Environment Variables**
-   doplň:
+1. V nastavení projektu na [vercel.com](https://vercel.com) → **Settings → Environment Variables**
+   doplň (Production):
    - `OPENAI_API_KEY` – tvůj OpenAI klíč
-   - `TURSO_DATABASE_URL` – z kroku 1
-   - `TURSO_AUTH_TOKEN` – z kroku 1
-4. Spusť `vercel --prod` (nebo redeploy z webu) — appka poběží na
+   - `TURSO_DATABASE_URL` – z Turso dashboardu
+   - `TURSO_AUTH_TOKEN` – z Turso dashboardu
+2. Spusť `vercel --prod` (nebo redeploy z webu) — appka poběží na
    `https://tvuj-projekt.vercel.app`, otevřeš ji z mobilu odkudkoliv.
-
-> 💡 Lokální vývoj (`npm start`) dál funguje normálně bez Turso účtu —
-> `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` se použijí jen pokud jsou v `.env` vyplněné.
 
 ---
 
 ## 🔧 Technologie
-- **Node.js** + **libSQL** (`@libsql/client`) — lokálně soubor, na Vercelu Turso
+- **Node.js** + **Turso/libSQL** (`@libsql/client/web` — bez nativních závislostí)
 - **Express** + **Multer** (nahrávání obrázku)
 - **OpenAI** `gpt-4o-mini` (vision)
 - Čistý HTML/CSS/JS frontend, bez build kroku

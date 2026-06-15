@@ -1,9 +1,9 @@
 // ====== Frontend logika Iron-Man trackeru ======
 
 const RACE_GOALS = {
-  swim: { km: 1.9, label: 'PLAVÁNÍ', ico: '🏊', cls: 'swim' },
-  bike: { km: 90, label: 'KOLO', ico: '🚴', cls: 'bike' },
-  run: { km: 21.1, label: 'BĚH', ico: '🏃', cls: 'run' },
+  swim: { km: 15, label: 'PLAVÁNÍ', ico: '🏊', cls: 'swim' },
+  bike: { km: 1000, label: 'KOLO', ico: '🚴', cls: 'bike' },
+  run: { km: 350, label: 'BĚH', ico: '🏃', cls: 'run' },
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -232,8 +232,7 @@ function renderDashboard() {
     const count = list.length;
     const totalKm = list.reduce((a, s) => a + (s.distance_km || 0), 0);
     const totalSec = list.reduce((a, s) => a + (s.duration_sec || 0), 0);
-    const longest = list.reduce((a, s) => Math.max(a, s.distance_km || 0), 0);
-    const pct = Math.min(100, Math.round((longest / g.km) * 100));
+    const pct = Math.min(100, Math.round((totalKm / g.km) * 100));
 
     const card = document.createElement('div');
     card.className = `stat-card ${g.cls}`;
@@ -242,9 +241,9 @@ function renderDashboard() {
       <div class="stat-row"><span>Tréninků</span><span>${count}</span></div>
       <div class="stat-row"><span>Celkem km</span><span>${totalKm.toFixed(1)}</span></div>
       <div class="stat-row"><span>Celkem čas</span><span>${fmtTime(totalSec)}</span></div>
-      <div class="bar-label">Připravenost (nejdelší / cíl)</div>
+      <div class="bar-label">Progres k cíli (celkem / cíl)</div>
       <div class="bar"><i style="width:${pct}%"></i></div>
-      <div class="bar-pct">${longest.toFixed(2)} / ${g.km} km · ${pct}%</div>`;
+      <div class="bar-pct">${totalKm.toFixed(1)} / ${g.km} km · ${pct}%</div>`;
     dash.appendChild(card);
   }
 }
