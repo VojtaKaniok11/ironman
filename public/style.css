@@ -1,0 +1,284 @@
+/* ====== RETRO / 8-BIT TÉMA ====== */
+:root {
+  --bg:        #0b0221;
+  --bg2:       #160a37;
+  --panel:     #1d0f44;
+  --ink:       #e8e6ff;
+  --green:     #39ff14;   /* neon zelená */
+  --cyan:      #00f0ff;   /* plavání */
+  --amber:     #ffd23f;   /* kolo */
+  --magenta:   #ff3ca6;   /* běh */
+  --shadow:    #000;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 50% -10%, #2a1163 0%, var(--bg) 60%) fixed;
+  color: var(--ink);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  padding-bottom: 60px;
+  overflow-x: hidden;
+}
+
+/* CRT scanline overlay */
+.scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
+  mix-blend-mode: multiply;
+}
+
+h1, h2, .tab, .btn, .pixel {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+}
+
+/* ====== HLAVIČKA ====== */
+header {
+  text-align: center;
+  padding: 34px 16px 22px;
+}
+h1 {
+  font-size: clamp(20px, 5vw, 42px);
+  margin: 0;
+  color: var(--green);
+  text-shadow: 3px 3px 0 var(--magenta), -2px -2px 0 var(--cyan);
+}
+.subtitle {
+  color: var(--amber);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  margin: 14px 0 8px;
+}
+.race-line {
+  color: var(--cyan);
+  font-size: 18px;
+  margin: 0;
+  opacity: 0.85;
+}
+.blink { animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ====== PANELY ====== */
+.panel {
+  max-width: 880px;
+  margin: 22px auto;
+  background: var(--panel);
+  border: 4px solid var(--green);
+  box-shadow: 0 0 0 4px var(--bg), 0 0 18px rgba(57,255,20,0.25);
+  padding: 18px 20px 24px;
+  image-rendering: pixelated;
+}
+.panel-title {
+  font-size: 12px;
+  color: var(--green);
+  margin: 0 0 18px;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+
+/* ====== DASHBOARD ====== */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.stat-card {
+  border: 3px solid;
+  padding: 14px;
+  background: rgba(0,0,0,0.3);
+}
+.stat-card.swim { border-color: var(--cyan); }
+.stat-card.bike { border-color: var(--amber); }
+.stat-card.run  { border-color: var(--magenta); }
+.stat-head {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stat-card.swim .stat-head { color: var(--cyan); }
+.stat-card.bike .stat-head { color: var(--amber); }
+.stat-card.run  .stat-head { color: var(--magenta); }
+.stat-row { display: flex; justify-content: space-between; font-size: 18px; }
+.stat-row span:last-child { color: #fff; }
+
+/* XP/progress bar - longest single session vs race goal */
+.bar-label { font-size: 15px; margin: 12px 0 4px; opacity: 0.8; }
+.bar {
+  height: 16px;
+  background: #000;
+  border: 2px solid #444;
+  position: relative;
+  overflow: hidden;
+}
+.bar > i {
+  position: absolute; inset: 0;
+  width: 0;
+  display: block;
+  transition: width 0.6s ease;
+  background-size: 12px 12px;
+  background-image: repeating-linear-gradient(90deg,
+    currentColor 0, currentColor 6px, rgba(0,0,0,0.35) 6px, rgba(0,0,0,0.35) 12px);
+}
+.stat-card.swim .bar > i { color: var(--cyan); }
+.stat-card.bike .bar > i { color: var(--amber); }
+.stat-card.run  .bar > i { color: var(--magenta); }
+.bar-pct { font-size: 14px; text-align: right; opacity: 0.7; }
+
+/* ====== DROPZONE ====== */
+.dropzone {
+  border: 3px dashed var(--cyan);
+  padding: 26px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--cyan);
+  background: rgba(0,240,255,0.04);
+  transition: background 0.15s, transform 0.1s;
+}
+.dropzone:hover { background: rgba(0,240,255,0.12); }
+.dropzone.drag { background: rgba(57,255,20,0.15); border-color: var(--green); color: var(--green); transform: scale(1.01); }
+.dz-big { font-family: 'Press Start 2P', monospace; font-size: 28px; margin: 0 0 12px; }
+
+.preview { text-align: center; margin-top: 16px; }
+.preview img {
+  max-width: 100%;
+  max-height: 320px;
+  border: 3px solid var(--amber);
+  image-rendering: auto;
+}
+
+/* ====== TLAČÍTKA ====== */
+.btn {
+  display: block;
+  width: 100%;
+  margin: 16px 0 0;
+  padding: 14px;
+  font-size: 12px;
+  color: #000;
+  background: var(--green);
+  border: none;
+  border-bottom: 5px solid #1f9c08;
+  cursor: pointer;
+  text-shadow: none;
+}
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(3px); border-bottom-width: 2px; }
+.btn-save { background: var(--amber); border-bottom-color: #b88a00; }
+
+/* ====== STATUS / LOADING ====== */
+.status { margin-top: 14px; min-height: 24px; font-size: 18px; color: var(--amber); text-align: center; }
+.status.err { color: var(--magenta); }
+.status.ok { color: var(--green); }
+.loader::after {
+  content: '';
+  animation: dots 1.2s steps(4, end) infinite;
+}
+@keyframes dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
+
+/* ====== VÝSLEDKOVÉ KARTY (editovatelné) ====== */
+.results { margin-top: 18px; display: grid; gap: 16px; }
+.rcard {
+  border: 3px solid var(--green);
+  padding: 14px;
+  background: rgba(0,0,0,0.25);
+}
+.rcard h3 { font-family:'Press Start 2P',monospace; font-size: 11px; margin: 0 0 12px; }
+.rgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; font-size: 15px; }
+.field label { opacity: 0.7; margin-bottom: 3px; }
+.field input, .field select {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  background: #000;
+  color: var(--ink);
+  border: 2px solid #555;
+  padding: 5px 8px;
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--green); }
+.field.full { grid-column: 1 / -1; }
+
+/* ====== TABY + DENÍK ====== */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tab {
+  font-size: 10px;
+  padding: 10px 12px;
+  background: #000;
+  color: var(--ink);
+  border: 2px solid #555;
+  cursor: pointer;
+}
+.tab.active { background: var(--green); color: #000; border-color: var(--green); }
+.tab.tab-swim.active { background: var(--cyan); border-color: var(--cyan); }
+.tab.tab-bike.active { background: var(--amber); border-color: var(--amber); }
+.tab.tab-run.active  { background: var(--magenta); border-color: var(--magenta); }
+
+.log { display: grid; gap: 10px; }
+.entry {
+  border-left: 6px solid #555;
+  background: rgba(0,0,0,0.3);
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+.entry.swim { border-left-color: var(--cyan); }
+.entry.bike { border-left-color: var(--amber); }
+.entry.run  { border-left-color: var(--magenta); }
+.entry .ico { font-size: 26px; }
+.entry .meta .ttl { font-size: 19px; color: #fff; }
+.entry .meta .sub { font-size: 15px; opacity: 0.75; }
+.entry .nums { font-size: 16px; text-align: right; white-space: nowrap; }
+.entry .nums b { color: var(--green); }
+.del {
+  background: none; border: 2px solid var(--magenta); color: var(--magenta);
+  font-family: 'Press Start 2P', monospace; font-size: 10px; padding: 6px 8px; cursor: pointer;
+}
+.del:hover { background: var(--magenta); color: #000; }
+.empty { text-align: center; opacity: 0.6; padding: 24px; font-size: 18px; }
+
+footer {
+  text-align: center;
+  margin-top: 30px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #6a5ea8;
+}
+
+.hidden { display: none !important; }
+
+/* ====== MOBIL ====== */
+@media (max-width: 600px) {
+  body { font-size: 18px; }
+  header { padding: 24px 10px 16px; }
+  .panel { padding: 14px 12px 18px; margin: 14px 8px; }
+
+  /* Formulářová mřížka z AI - na mobilu jen 1 sloupec */
+  .rgrid { grid-template-columns: 1fr; }
+
+  /* Záznam v deníku - vejde se i s delším výpisem statistik */
+  .entry {
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    padding: 10px;
+  }
+  .entry .ico { font-size: 22px; }
+  .entry .nums { white-space: normal; text-align: left; margin-top: 4px; }
+  .del { padding: 8px; font-size: 9px; align-self: start; }
+
+  .tab { font-size: 9px; padding: 10px 8px; flex: 1 1 auto; }
+}

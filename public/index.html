@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HALF IRON-MAN TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+
+  <header class="crt">
+    <h1 class="glitch" data-text="HALF IRON-MAN">HALF IRON-MAN</h1>
+    <p class="subtitle blink">★ TRAINING TRACKER ★</p>
+    <p class="race-line">90 KM KOLO &nbsp;·&nbsp; 1.9 KM PLAVÁNÍ &nbsp;·&nbsp; 21.1 KM BĚH</p>
+  </header>
+
+  <!-- PŘEHLED / DASHBOARD -->
+  <section class="panel">
+    <h2 class="panel-title">» STATUS HRDINY «</h2>
+    <div id="dashboard" class="dashboard"></div>
+  </section>
+
+  <!-- NAHRÁNÍ SCREENSHOTU -->
+  <section class="panel">
+    <h2 class="panel-title">» NOVÝ TRÉNINK — NAHRAJ SCREENSHOT «</h2>
+    <div id="dropzone" class="dropzone">
+      <p class="dz-big">[ + ]</p>
+      <p>Přetáhni sem screenshot<br />nebo klikni a vyber soubor</p>
+      <input type="file" id="fileInput" accept="image/*" hidden />
+    </div>
+    <div id="preview" class="preview hidden">
+      <img id="previewImg" alt="náhled" />
+    </div>
+    <button id="analyzeBtn" class="btn hidden">⚡ NAČÍST POMOCÍ AI</button>
+    <div id="status" class="status"></div>
+
+    <!-- Editovatelné karty výsledků z AI -->
+    <div id="results" class="results"></div>
+    <button id="saveBtn" class="btn btn-save hidden">💾 ULOŽIT DO DENÍKU</button>
+  </section>
+
+  <!-- DENÍK TRÉNINKŮ -->
+  <section class="panel">
+    <h2 class="panel-title">» TRÉNINKOVÝ DENÍK «</h2>
+    <div class="tabs">
+      <button class="tab active" data-d="all">VŠE</button>
+      <button class="tab tab-swim" data-d="swim">🏊 PLAVÁNÍ</button>
+      <button class="tab tab-bike" data-d="bike">🚴 KOLO</button>
+      <button class="tab tab-run" data-d="run">🏃 BĚH</button>
+    </div>
+    <div id="log" class="log"></div>
+  </section>
+
+  <footer>
+    <p>INSERT COIN ·  made for the half iron-man grind</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

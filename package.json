@@ -1,0 +1,20 @@
+{
+  "name": "ironman-tracker",
+  "version": "1.0.0",
+  "description": "Retro tréninkový tracker pro Half Iron-Man (plavání / kolo / běh) s AI čtením screenshotů",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.1",
+    "openai": "^4.56.0"
+  }
+}
