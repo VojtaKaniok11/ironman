@@ -21,7 +21,7 @@ vyčítá data o tréninku pro triatlonistu, který trénuje na závod Half Iron
 Z obrázku vytěž VŠECHNY tréninky, které na něm jsou. Pro každý vrať objekt s těmito poli:
 - discipline: jedna z hodnot "swim" (plavání), "bike" (kolo) nebo "run" (běh). Urči podle ikony, názvu nebo metrik.
 - title: krátký název tréninku, jak je na obrázku (nebo null).
-- date: datum ve formátu "YYYY-MM-DD", pokud je čitelné, jinak null.
+- date: datum POUZE jako den a měsíc ve formátu "DD.MM." (např. "15.06."), BEZ roku. Rok nikdy nehádej ani nedoplňuj, i kdyby byl na obrázku vidět. Pokud datum není čitelné, dej null.
 - distance_km: vzdálenost VŽDY v kilometrech jako číslo. Pokud je plavání v metrech, převeď na km (např. 1900 m = 1.9).
 - duration_text: doba trvání tak, jak je napsaná (např. "1:23:45" nebo "45:10"), jinak null.
 - duration_seconds: doba trvání převedená na celkový počet sekund jako číslo, jinak null.
@@ -71,6 +71,23 @@ export async function extractFromImage(dataUrl) {
   return activities.map(normalize);
 }
 
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// Vytáhne z čehokoli jen den a měsíc ve tvaru "DD.MM." a zahodí rok.
+// Tím se zbavíme situací, kdy AI rok uhodne špatně.
+function toDayMonth(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  // ISO tvar YYYY-MM-DD (kdyby ho model přesto vrátil)
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${pad2(m[3])}.${pad2(m[2])}.`;
+  // Český/evropský tvar DD.MM. nebo DD.MM.YYYY, případně D/M
+  m = s.match(/^(\d{1,2})\s*[.\/-]\s*(\d{1,2})/);
+  if (m) return `${pad2(m[1])}.${pad2(m[2])}.`;
+  return null;
+}
+
 // Sjednotí a očistí jeden záznam z AI do podoby pro databázi.
 function normalize(a) {
   const disciplineMap = {
@@ -87,7 +104,7 @@ function normalize(a) {
   return {
     discipline,
     title: a.title ?? null,
-    date: a.date ?? null,
+    date: toDayMonth(a.date),
     distance_km: num(a.distance_km),
     duration_text: a.duration_text ?? null,
     duration_sec: int(a.duration_seconds),

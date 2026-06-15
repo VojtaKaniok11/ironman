@@ -251,6 +251,56 @@ h1 {
 .del:hover { background: var(--magenta); color: #000; }
 .empty { text-align: center; opacity: 0.6; padding: 24px; font-size: 18px; }
 
+/* ====== ROZDĚLENÍ DENÍKU PO MĚSÍCÍCH ====== */
+.month-group { display: grid; gap: 10px; margin-bottom: 26px; }
+.month-header {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--amber);
+  margin: 6px 0 2px;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed #4a3a7a;
+  text-shadow: 2px 2px 0 var(--shadow);
+}
+.month-header .yr { font-size: 10px; opacity: 0.6; margin-left: 6px; }
+.month-entries { display: grid; gap: 10px; }
+
+/* ====== MĚSÍČNÍ POROVNÁNÍ ====== */
+.cmp-block { margin-bottom: 6px; }
+.cmp-banner { font-size: 15px; color: var(--green); opacity: 0.9; margin: 2px 0 8px; }
+.cmp-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.cmp {
+  border: 2px solid #555;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 12px;
+}
+.cmp.swim { border-color: var(--cyan); }
+.cmp.bike { border-color: var(--amber); }
+.cmp.run  { border-color: var(--magenta); }
+.cmp-head { font-family: 'Press Start 2P', monospace; font-size: 9px; margin-bottom: 10px; }
+.cmp.swim .cmp-head { color: var(--cyan); }
+.cmp.bike .cmp-head { color: var(--amber); }
+.cmp.run  .cmp-head { color: var(--magenta); }
+.cmp-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 16px;
+  padding: 2px 0;
+}
+.cmp-row > span { opacity: 0.75; }
+.cmp-row > b { color: #fff; }
+.cmp-row > i { font-style: normal; font-size: 14px; text-align: right; white-space: nowrap; }
+.cmp-row i.up  { color: var(--green); }
+.cmp-row i.down { color: var(--magenta); }
+.cmp-row i.neu { color: #8a7fc0; }
+.cmp-note { font-size: 13px; opacity: 0.55; margin-top: 8px; }
+
 footer {
   text-align: center;
   margin-top: 30px;

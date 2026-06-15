@@ -34,6 +34,81 @@ function fmtKm(km) {
 }
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+// ---------- Datum (bez roku) ----------
+const pad2 = (n) => String(n).padStart(2, '0');
+
+// Dnešní datum jako "DD.MM." (bez roku).
+function todayDM() {
+  const d = new Date();
+  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.`;
+}
+
+// Z uloženého data "YYYY-MM-DD" udělá pro zobrazení "DD.MM." (rok schová).
+function fmtDateDM(iso) {
+  const m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}.${m[2]}.`;
+  return esc(iso || '–');
+}
+
+// Z uživatelského vstupu "DD.MM." (nebo "DD.MM.RRRR") udělá pro uložení
+// "YYYY-MM-DD". Když rok není zadaný, doplní aktuální rok automaticky.
+function parseDateInput(str) {
+  const now = new Date();
+  const s = String(str ?? '').trim();
+  if (s) {
+    let m = s.match(/^(\d{1,2})\s*[.\/-]\s*(\d{1,2})(?:\s*[.\/-]\s*(\d{2,4}))?\.?$/);
+    if (m) {
+      const day = +m[1], mon = +m[2];
+      let yr = m[3] ? +m[3] : now.getFullYear();
+      if (yr < 100) yr += 2000;
+      if (mon >= 1 && mon <= 12 && day >= 1 && day <= 31) {
+        return `${yr}-${pad2(mon)}-${pad2(day)}`;
+      }
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // už ISO
+  }
+  return now.toISOString().slice(0, 10);
+}
+
+// ---------- České názvy měsíců + klíče ----------
+const MONTHS_CS = ['LEDEN', 'ÚNOR', 'BŘEZEN', 'DUBEN', 'KVĚTEN', 'ČERVEN',
+  'ČERVENEC', 'SRPEN', 'ZÁŘÍ', 'ŘÍJEN', 'LISTOPAD', 'PROSINEC'];
+
+function monthKeyOf(iso) {
+  return String(iso ?? '').slice(0, 7); // "YYYY-MM"
+}
+function prevMonthKey(key) {
+  const [y, m] = key.split('-').map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${pad2(m - 1)}`;
+}
+function monthLabel(key) {
+  const [y, m] = key.split('-').map(Number);
+  const name = MONTHS_CS[m - 1] || key;
+  const curY = new Date().getFullYear();
+  return y === curY ? name : `${name} <span class="yr">${y}</span>`;
+}
+const currentMonthKey = () => new Date().toISOString().slice(0, 7);
+
+// ---------- Tempo / rychlost ----------
+function fmtClock(sec) { // celé sekundy -> "M:SS"
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}:${pad2(s)}`;
+}
+function fmtPerf(disc, st) {
+  // Vrátí výkonnostní metriku měsíce pro danou disciplínu.
+  if (!st.km || !st.sec) return null;
+  if (disc === 'bike') {
+    return { value: (st.km * 3600) / st.sec, text: `${((st.km * 3600) / st.sec).toFixed(1)} km/h`, higherBetter: true };
+  }
+  if (disc === 'swim') {
+    const sp = st.sec / (st.km * 10); // sekund / 100 m
+    return { value: sp, text: `${fmtClock(sp)} /100m`, higherBetter: false };
+  }
+  const sp = st.sec / st.km; // běh: sekund / km
+  return { value: sp, text: `${fmtClock(sp)} /km`, higherBetter: false };
+}
+
 function setStatus(msg, type = '', loading = false) {
   statusEl.className = 'status ' + type + (loading ? ' loader' : '');
   statusEl.textContent = msg;
@@ -98,7 +173,7 @@ analyzeBtn.addEventListener('click', async () => {
 // ---------- Editovatelné karty z AI ----------
 function renderResultCards(activities) {
   resultsEl.innerHTML = '';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayDM();
 
   activities.forEach((a, idx) => {
     const card = document.createElement('div');
@@ -108,7 +183,7 @@ function renderResultCards(activities) {
       <h3>TRÉNINK #${idx + 1}</h3>
       <div class="rgrid">
         ${field('discipline', 'Disciplína', a.discipline, 'select')}
-        ${field('date', 'Datum', a.date || today, 'date')}
+        ${field('date', 'Datum (DD.MM. — rok nech prázdný)', a.date || today, 'text')}
         ${field('title', 'Název', a.title, 'text', 'full')}
         ${field('distance_km', 'Vzdálenost (km)', a.distance_km, 'number')}
         ${field('duration_text', 'Čas', a.duration_text, 'text')}
@@ -151,7 +226,7 @@ saveBtn.addEventListener('click', async () => {
     const durTxt = get('duration_text');
     return {
       discipline: get('discipline'),
-      date: get('date'),
+      date: parseDateInput(get('date')),
       title: get('title'),
       distance_km: numOrNull('distance_km'),
       duration_text: durTxt,
@@ -259,25 +334,23 @@ function renderLog() {
     return;
   }
 
-  log.innerHTML = list.map((s) => {
-    const g = RACE_GOALS[s.discipline] || { ico: '🎯' };
-    const nums = [
-      s.distance_km != null ? `<b>${fmtKm(s.distance_km)}</b>` : '',
-      s.duration_sec != null ? fmtTime(s.duration_sec) : (s.duration_text || ''),
-      s.pace ? `@ ${esc(s.pace)}` : '',
-      s.avg_hr ? `♥ ${s.avg_hr}` : '',
-      s.avg_speed_kmh ? `${s.avg_speed_kmh} km/h` : '',
-    ].filter(Boolean).join(' · ');
+  // Rozdělení záznamů podle měsíce ("YYYY-MM"), nejnovější nahoře.
+  const byMonth = new Map();
+  for (const s of list) {
+    const key = monthKeyOf(s.date);
+    if (!byMonth.has(key)) byMonth.set(key, []);
+    byMonth.get(key).push(s);
+  }
+  const monthKeys = [...byMonth.keys()].sort().reverse();
+  const disciplines = currentTab === 'all' ? ['swim', 'bike', 'run'] : [currentTab];
 
+  log.innerHTML = monthKeys.map((key) => {
+    const entries = byMonth.get(key).map(entryHtml).join('');
     return `
-      <div class="entry ${s.discipline}">
-        <div class="ico">${g.ico}</div>
-        <div class="meta">
-          <div class="ttl">${esc(s.title || g.label || '')}</div>
-          <div class="sub">${esc(s.date)}${s.notes ? ' · ' + esc(s.notes) : ''}</div>
-          <div class="nums">${nums}</div>
-        </div>
-        <button class="del" data-id="${s.id}">✕</button>
+      <div class="month-group">
+        <div class="month-header">» ${monthLabel(key)} «</div>
+        ${monthComparisonHtml(key, disciplines)}
+        <div class="month-entries">${entries}</div>
       </div>`;
   }).join('');
 
@@ -288,6 +361,104 @@ function renderLog() {
       await refresh();
     })
   );
+}
+
+// Jeden řádek deníku.
+function entryHtml(s) {
+  const g = RACE_GOALS[s.discipline] || { ico: '🎯' };
+  const nums = [
+    s.distance_km != null ? `<b>${fmtKm(s.distance_km)}</b>` : '',
+    s.duration_sec != null ? fmtTime(s.duration_sec) : (s.duration_text || ''),
+    s.pace ? `@ ${esc(s.pace)}` : '',
+    s.avg_hr ? `♥ ${s.avg_hr}` : '',
+    s.avg_speed_kmh ? `${s.avg_speed_kmh} km/h` : '',
+  ].filter(Boolean).join(' · ');
+
+  return `
+    <div class="entry ${s.discipline}">
+      <div class="ico">${g.ico}</div>
+      <div class="meta">
+        <div class="ttl">${esc(s.title || g.label || '')}</div>
+        <div class="sub">${fmtDateDM(s.date)}${s.notes ? ' · ' + esc(s.notes) : ''}</div>
+        <div class="nums">${nums}</div>
+      </div>
+      <button class="del" data-id="${s.id}">✕</button>
+    </div>`;
+}
+
+// Souhrn měsíce pro jednu disciplínu.
+function monthStats(monthKey, disc) {
+  const list = allSessions.filter(
+    (s) => s.discipline === disc && monthKeyOf(s.date) === monthKey
+  );
+  return {
+    count: list.length,
+    km: list.reduce((a, s) => a + (s.distance_km || 0), 0),
+    sec: list.reduce((a, s) => a + (s.duration_sec || 0), 0),
+  };
+}
+
+// Štítek s rozdílem proti minulému měsíci (▲ zelená = zlepšení).
+function deltaTag(cur, prev, higherBetter, fmtDiff) {
+  if (prev === null || prev === undefined) return `<i class="neu">—</i>`;
+  const d = cur - prev;
+  if (Math.abs(d) < 1e-9) return `<i class="neu">beze změny</i>`;
+  const better = higherBetter ? d > 0 : d < 0;
+  return `<i class="${better ? 'up' : 'down'}">${better ? '▲' : '▼'} ${fmtDiff(d, better)}</i>`;
+}
+
+// Porovnávací karty pro daný měsíc vs. předchozí měsíc, po disciplínách.
+function monthComparisonHtml(monthKey, disciplines) {
+  const prevKey = prevMonthKey(monthKey);
+  const isCurrent = monthKey === currentMonthKey();
+
+  const cards = disciplines.map((disc) => {
+    const cur = monthStats(monthKey, disc);
+    if (cur.count === 0) return ''; // tuto disciplínu jsem tento měsíc netrénoval
+    const prev = monthStats(prevKey, disc);
+    const havePrev = prev.count > 0;
+    const g = RACE_GOALS[disc];
+
+    const rows = [];
+    rows.push(cmpRow('Tréninků', String(cur.count),
+      deltaTag(cur.count, havePrev ? prev.count : null, true, (d) => (d > 0 ? '+' : '') + d)));
+    rows.push(cmpRow('Vzdálenost', `${cur.km.toFixed(1)} km`,
+      deltaTag(cur.km, havePrev ? prev.km : null, true, (d) => `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} km`)));
+    rows.push(cmpRow('Čas', fmtTime(cur.sec),
+      deltaTag(cur.sec, havePrev ? prev.sec : null, true, (d) => `${d > 0 ? '+' : '−'}${fmtTime(Math.abs(d))}`)));
+
+    const curPerf = fmtPerf(disc, cur);
+    const prevPerf = havePrev ? fmtPerf(disc, prev) : null;
+    if (curPerf) {
+      const perfLabel = disc === 'bike' ? 'Rychlost' : 'Tempo';
+      rows.push(cmpRow(perfLabel, curPerf.text,
+        deltaTag(curPerf.value, prevPerf ? prevPerf.value : null, curPerf.higherBetter,
+          (d, better) => disc === 'bike'
+            ? `${d > 0 ? '+' : '−'}${Math.abs(d).toFixed(1)} km/h`
+            : `${better ? 'rychlejší' : 'pomalejší'} o ${fmtClock(Math.abs(d))}`)));
+    }
+
+    const note = havePrev
+      ? `vs. ${MONTHS_CS[(prevKey.split('-')[1] | 0) - 1].toLowerCase()}`
+      : 'minulý měsíc bez tréninku — není s čím porovnat';
+
+    return `
+      <div class="cmp ${disc}">
+        <div class="cmp-head">${g.ico} ${g.label}</div>
+        ${rows.join('')}
+        <div class="cmp-note">${note}</div>
+      </div>`;
+  }).filter(Boolean).join('');
+
+  if (!cards) return '';
+  const banner = isCurrent
+    ? `<div class="cmp-banner">⏳ Tento měsíc ještě běží — průběžné porovnání s minulým měsícem</div>`
+    : `<div class="cmp-banner">📊 Měsíční bilance vs. předchozí měsíc</div>`;
+  return `<div class="cmp-block">${banner}<div class="cmp-wrap">${cards}</div></div>`;
+}
+
+function cmpRow(label, value, tag) {
+  return `<div class="cmp-row"><span>${label}</span><b>${value}</b>${tag}</div>`;
 }
 
 // Start
